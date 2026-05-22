@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Specialization — Flashcards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --surface: #16213a;
+    --border: #243050;
+    --border-glow: #3b5bdb;
+    --gold: #f0b429;
+    --gold2: #ffd166;
+    --teal: #38d9a9;
+    --rose: #ff6b9d;
+    --text: #e2e8f7;
+    --text-dim: #7a8fb5;
+    --text-mid: #b0bfdc;
+    --card-front: #131d33;
+    --card-back: #0d2035;
+    --w1: #3b82f6;
+    --w2: #10b981;
+    --w3: #f59e0b;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+    --glow: 0 0 24px rgba(59,91,219,0.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(59,91,219,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,91,219,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* Header */
+  header { text-align: center; padding: 40px 0 32px; }
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal);
+    border: 1px solid var(--teal);
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    opacity: 0.85;
+  }
+  h1 {
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .subtitle { font-family: var(--mono); font-size: 12px; color: var(--text-dim); letter-spacing: 0.05em; }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin: 28px 0 20px;
+  }
+  .filter-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover { border-color: var(--border-glow); color: var(--text); }
+  .filter-btn.active { background: var(--border-glow); border-color: var(--border-glow); color: #fff; }
+  .filter-btn[data-week="1"].active { background: var(--w1); border-color: var(--w1); }
+  .filter-btn[data-week="2"].active { background: var(--w2); border-color: var(--w2); }
+  .filter-btn[data-week="3"].active { background: var(--w3); border-color: var(--w3); color: #111; }
+
+  .action-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+  /* Progress */
+  .progress-wrap { margin: 0 0 24px; }
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--border-glow), var(--teal));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* Card counter and topic */
+  .card-meta {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .card-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .card-topic {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .week-tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-right: 6px;
+    font-weight: 700;
+  }
+  .week-tag.w1 { background: rgba(59,130,246,0.2); color: var(--w1); }
+  .week-tag.w2 { background: rgba(16,185,129,0.2); color: var(--w2); }
+  .week-tag.w3 { background: rgba(245,158,11,0.2); color: var(--w3); }
+
+  /* Flashcard */
+  .card-scene {
+    width: 100%;
+    height: 340px;
+    perspective: 1200px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    user-select: none;
+  }
+  .card-scene:focus { outline: none; }
+
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute; inset: 0;
+    border-radius: 6px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 40px;
+    text-align: center;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow), var(--glow);
+    overflow: hidden;
+  }
+
+  /* Corner decorations */
+  .card-face::before, .card-face::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    border-color: var(--border-glow);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .card-face::before { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+  .card-face::after { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+
+  .card-front {
+    background: var(--card-front);
+  }
+  .card-back {
+    background: var(--card-back);
+    transform: rotateY(180deg);
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .card-front .card-label { color: var(--text-dim); }
+  .card-back .card-label { color: var(--teal); }
+
+  .card-q {
+    font-size: clamp(16px, 2.5vw, 20px);
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--text);
+    max-width: 640px;
+  }
+  .card-a {
+    font-size: clamp(13px, 2vw, 15px);
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-mid);
+    max-width: 660px;
+    text-align: left;
+  }
+  .card-a code, .formula {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--gold2);
+    background: rgba(240,180,41,0.1);
+    padding: 1px 5px;
+    border-radius: 2px;
+    display: inline;
+  }
+  .card-a ul { padding-left: 18px; margin-top: 8px; }
+  .card-a li { margin-bottom: 4px; }
+  .card-a strong { color: var(--teal); font-weight: 600; }
+
+  .flip-hint {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    opacity: 0.6;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* Navigation buttons */
+  .nav-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .nav-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 20px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 80px;
+  }
+  .nav-btn:hover:not(:disabled) { border-color: var(--border-glow); background: var(--bg3); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Know / Review buttons */
+  .verdict-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .verdict-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 9px 22px;
+    border-radius: 3px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    display: none;
+  }
+  .verdict-btn.visible { display: block; }
+  .know-btn { background: rgba(56,217,169,0.12); border-color: var(--teal); color: var(--teal); }
+  .know-btn:hover { background: rgba(56,217,169,0.25); }
+  .review-btn { background: rgba(255,107,157,0.1); border-color: var(--rose); color: var(--rose); }
+  .review-btn:hover { background: rgba(255,107,157,0.22); }
+
+  /* Keyboard shortcut hint */
+  .kb-hints {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.55;
+    margin-top: 4px;
+  }
+  kbd {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+
+  /* Results Panel */
+  .results-panel {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+  }
+  .results-panel.visible { display: block; }
+  .results-panel h2 { font-size: 28px; font-weight: 800; margin-bottom: 12px; color: var(--gold); }
+  .results-score { font-family: var(--mono); font-size: 48px; font-weight: 700; color: var(--teal); margin: 16px 0; }
+  .results-panel p { font-size: 14px; color: var(--text-mid); margin-bottom: 20px; }
+  .restart-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 12px 28px;
+    background: var(--border-glow);
+    border: none;
+    border-radius: 3px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s;
+  }
+  .restart-btn:hover { opacity: 0.85; }
+
+  /* Lesson index panel */
+  .toc-toggle {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toc-toggle:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .toc-panel {
+    display: none;
+    margin: 16px 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+  .toc-panel.visible { display: block; }
+  .toc-week { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin: 12px 0 6px; }
+  .toc-week.w1 { color: var(--w1); }
+  .toc-week.w2 { color: var(--w2); }
+  .toc-week.w3 { color: var(--w3); }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 4px 0;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .toc-item:hover { color: var(--text); }
+  .toc-item .toc-num { font-family: var(--mono); font-size: 10px; width: 24px; text-align: right; flex-shrink: 0; }
+  .toc-item .toc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s; }
+  .toc-item.known .toc-dot { background: var(--teal); }
+  .toc-item.review .toc-dot { background: var(--rose); }
+  .toc-item.current .toc-dot { background: var(--gold); }
+
+  footer {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.45;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    letter-spacing: 0.05em;
+  }
+
+  /* Scroll bar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 500px) {
+    .card-scene { height: 300px; }
+    .card-face { padding: 28px 20px; }
+    .card-q { font-size: 15px; }
+    .card-a { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="badge">DeepLearning.AI · ML Specialization · Course 1</div>
+    <h1>Machine Learning Flashcards</h1>
+    <p class="subtitle">// Supervised Learning: Regression &amp; Classification</p>
+  </header>
+
+  <div class="controls">
+    <button class="filter-btn active" data-week="all">All Weeks</button>
+    <button class="filter-btn" data-week="1">Week 1</button>
+    <button class="filter-btn" data-week="2">Week 2</button>
+    <button class="filter-btn" data-week="3">Week 3</button>
+    <button class="action-btn" id="shuffleBtn">⇌ Shuffle</button>
+    <button class="action-btn" id="resetBtn">↺ Reset Progress</button>
+    <button class="toc-toggle" id="tocToggle">≡ Lesson Index</button>
+  </div>
+
+  <div class="toc-panel" id="tocPanel"></div>
+
+  <div class="progress-wrap">
+    <div class="progress-stats">
+      <span id="progText">0 / 0 reviewed</span>
+      <span id="knownText">0 known · 0 to review</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div id="mainDeck">
+    <div class="card-meta">
+      <div class="card-num" id="cardNum">Card 1 of 30</div>
+      <div class="card-topic" id="cardTopic"></div>
+    </div>
+
+    <div class="card-scene" id="cardScene" tabindex="0" role="button" aria-label="Flashcard, click to flip">
+      <div class="card-inner" id="cardInner">
+        <div class="card-face card-front">
+          <span class="card-label">Question</span>
+          <div class="card-q" id="cardQ"></div>
+          <span class="flip-hint">click or press space to reveal</span>
+        </div>
+        <div class="card-face card-back">
+          <span class="card-label">Answer</span>
+          <div class="card-a" id="cardA"></div>
+          <span class="flip-hint">← / → to navigate</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdict-row">
+      <button class="verdict-btn know-btn" id="knowBtn">✓ Got It</button>
+      <button class="verdict-btn review-btn" id="reviewBtn">✗ Review Again</button>
+    </div>
+
+    <div class="nav-row">
+      <button class="nav-btn" id="prevBtn">← Prev</button>
+      <button class="nav-btn" id="nextBtn">Next →</button>
+    </div>
+
+    <div class="kb-hints">
+      <kbd>Space</kbd> flip &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> navigate &nbsp;·&nbsp; <kbd>K</kbd> know &nbsp;·&nbsp; <kbd>R</kbd> review
+    </div>
+  </div>
+
+  <div class="results-panel" id="resultsPanel">
+    <h2>Deck Complete!</h2>
+    <div class="results-score" id="resultsScore">0 / 0</div>
+    <p id="resultsMsg"></p>
+    <button class="restart-btn" id="restartBtn">Restart Deck</button>
+  </div>
+
+  <footer>Built from DeepLearning.AI ML Specialization · Course 1 Syllabus — GitHub Pages ready</footer>
+</div>
+
+<script>
+const CARDS = [
+  // ─── WEEK 1: Overview of Machine Learning ───────────────────────────────
+  {
+    week: 1, section: "Overview of Machine Learning",
+    q: "What is Machine Learning, in one sentence?",
+    a: `<strong>Machine Learning</strong> is the science of getting computers to learn without being explicitly programmed (Arthur Samuel, 1959).<br><br>The computer learns patterns from data and improves its performance with experience, rather than following hand-coded rules.`
+  },
+  {
+    week: 1, section: "Overview of Machine Learning",
+    q: "Name 5 real-world applications of Machine Learning mentioned in the course.",
+    a: `<ul><li>Web search ranking (Google, Bing, Baidu)</li><li>Photo tagging & facial recognition (Instagram, Snapchat)</li><li>Content recommendations (Netflix, Spotify)</li><li>Speech-to-text / Voice assistants (Siri, Google Assistant)</li><li>Spam email detection</li></ul><br>Also: medical diagnosis, wind turbine optimization, factory defect inspection.`
+  },
+  // ─── WEEK 1: Supervised vs Unsupervised ───────────────────────────────
+  {
+    week: 1, section: "Supervised vs. Unsupervised Learning",
+    q: "What is Supervised Learning? Give two examples.",
+    a: `<strong>Supervised Learning</strong> trains on labeled data — pairs of (input X → output Y). The algorithm learns a mapping from inputs to correct outputs.<br><br>Examples:<ul><li><strong>Regression:</strong> predicting house price from size</li><li><strong>Classification:</strong> detecting whether an email is spam</li></ul>`
+  },
+  {
+    week: 1, section: "Supervised vs. Unsupervised Learning",
+    q: "What is the difference between Regression and Classification?",
+    a: `<strong>Regression</strong> predicts a <strong>continuous number</strong> from an infinite range of values. Example: predicting house price ($342,000).<br><br><strong>Classification</strong> predicts a <strong>discrete category</strong> from a small set of possible classes. Example: tumor is malignant (1) or benign (0).`
+  },
+  {
+    week: 1, section: "Supervised vs. Unsupervised Learning",
+    q: "What is Unsupervised Learning? Name its 3 main types.",
+    a: `<strong>Unsupervised Learning</strong> finds structure in <em>unlabeled</em> data — the algorithm isn't told what to look for.<br><br>3 main types:<ul><li><strong>Clustering</strong> — grouping similar data (e.g., Google News grouping stories)</li><li><strong>Anomaly Detection</strong> — finding unusual data points (e.g., fraud detection)</li><li><strong>Dimensionality Reduction</strong> — compressing data using fewer variables</li></ul>`
+  },
+  // ─── WEEK 1: Linear Regression Model ────────────────────────────────
+  {
+    week: 1, section: "Regression Model",
+    q: "Write the Linear Regression model formula. What does each term mean?",
+    a: `<code>f(x) = wx + b</code><br><br><ul><li><strong>w</strong> = weight (slope) — controls how much x affects the prediction</li><li><strong>b</strong> = bias (intercept) — the baseline value when x = 0</li><li><strong>x</strong> = input feature</li><li><strong>f(x) = ŷ</strong> = predicted output</li></ul>Goal: find w and b that make ŷ close to the actual label y.`
+  },
+  {
+    week: 1, section: "Regression Model",
+    q: "What is the training set notation used in the course? Define m, x, y, and (x⁽ⁱ⁾, y⁽ⁱ⁾).",
+    a: `<ul><li><strong>m</strong> = number of training examples</li><li><strong>x</strong> = input feature (e.g., house size)</li><li><strong>y</strong> = output / target label (e.g., house price)</li><li><code>(x⁽ⁱ⁾, y⁽ⁱ⁾)</code> = the iᵗʰ training example</li></ul>The learning algorithm processes the training set and outputs model parameters w and b, defining the function f that maps new x's to predictions ŷ.`
+  },
+  {
+    week: 1, section: "Regression Model",
+    q: "What is the Cost Function for linear regression? Write the formula and explain why we use it.",
+    a: `The <strong>Mean Squared Error (MSE)</strong> cost function:<br><br><code>J(w,b) = (1/2m) Σᵢ (f(x⁽ⁱ⁾) − y⁽ⁱ⁾)²</code><br><br>It measures the <strong>average squared difference</strong> between predictions and actual values. The ½ is a convenience factor to simplify the derivative. The <strong>goal</strong> is to find w, b that minimise J(w,b).`
+  },
+  {
+    week: 1, section: "Regression Model",
+    q: "What does the cost function surface look like for linear regression, and what are we searching for on it?",
+    a: `For linear regression, the cost function J(w,b) forms a <strong>bowl-shaped (convex) surface</strong> when plotted in 3D against w and b.<br><br>We are searching for the <strong>global minimum</strong> — the single lowest point on this bowl. Contour plots show the same surface as concentric ellipses where the center is the minimum.`
+  },
+  // ─── WEEK 1: Gradient Descent ─────────────────────────────────────────
+  {
+    week: 1, section: "Gradient Descent",
+    q: "What is Gradient Descent and what problem does it solve?",
+    a: `<strong>Gradient Descent</strong> is an optimization algorithm that <strong>minimizes any cost function</strong> (not just for linear regression).<br><br>It works by:<ul><li>Starting at some initial w and b</li><li>Repeatedly taking steps in the direction of <strong>steepest downhill</strong> (negative gradient)</li><li>Until the algorithm converges at a (local or global) minimum</li></ul>`
+  },
+  {
+    week: 1, section: "Gradient Descent",
+    q: "Write the Gradient Descent update rules. What does 'simultaneous update' mean?",
+    a: `Update rules (applied <strong>simultaneously</strong>):<br><code>w := w − α (∂J/∂w)</code><br><code>b := b − α (∂J/∂b)</code><br><br><strong>Simultaneous</strong> means: compute <em>both</em> partial derivatives using the <em>current</em> w and b, then update both at the same time. <strong>Wrong</strong>: update w first, then use the new w to compute the derivative for b.`
+  },
+  {
+    week: 1, section: "Gradient Descent",
+    q: "What is the Learning Rate (α)? What happens if α is too large or too small?",
+    a: `<strong>α (alpha)</strong> is the learning rate — controls the size of each gradient descent step.<br><br><ul><li><strong>Too small:</strong> gradient descent converges very slowly — many iterations needed</li><li><strong>Too large:</strong> gradient descent may <em>overshoot</em> the minimum — cost oscillates or diverges</li><li><strong>Just right:</strong> converges efficiently in a reasonable number of steps</li></ul>If α is fixed and you're near a minimum, the gradient naturally becomes smaller, so steps become smaller automatically.`
+  },
+  {
+    week: 1, section: "Gradient Descent",
+    q: "What is Batch Gradient Descent? How does it differ from other variants?",
+    a: `<strong>Batch Gradient Descent</strong> uses <strong>all m training examples</strong> in every step to compute the gradients.<br><br>Each update: <code>∂J/∂w = (1/m) Σᵢ (f(x⁽ⁱ⁾) − y⁽ⁱ⁾) · x⁽ⁱ⁾</code><br><br>Contrast with:<ul><li><strong>Stochastic GD:</strong> one random example per step</li><li><strong>Mini-batch GD:</strong> a small batch (e.g., 32 examples) per step</li></ul>For linear regression in this course, Batch GD is used.`
+  },
+  // ─── WEEK 2: Multiple Linear Regression ───────────────────────────────
+  {
+    week: 2, section: "Multiple Linear Regression",
+    q: "Write the Multiple Linear Regression model with n features. What is the compact notation?",
+    a: `Full form: <code>f(x) = w₁x₁ + w₂x₂ + ... + wₙxₙ + b</code><br><br>Compact dot-product notation: <code>f(x) = w⃗ · x⃗ + b</code><br><br>Where <strong>w⃗</strong> and <strong>x⃗</strong> are vectors (lists of n numbers). The dot product = <code>Σⱼ wⱼxⱼ</code>.<br><br>Also called <strong>multivariate regression</strong> (note: in the course, "multiple linear regression" is the preferred term).`
+  },
+  {
+    week: 2, section: "Multiple Linear Regression",
+    q: "What is the training set notation for multiple features? What does x⁽ⁱ⁾ represent vs. x⁽ⁱ⁾ⱼ?",
+    a: `With n features and m training examples:<br><ul><li><code>xⱼ</code> = the jᵗʰ feature (j = 1 to n)</li><li><code>x⁽ⁱ⁾</code> = a <strong>vector</strong> of all n features of the iᵗʰ training example</li><li><code>x⁽ⁱ⁾ⱼ</code> = the jᵗʰ feature of the iᵗʰ training example (a single number)</li></ul>Example: <code>x⁽²⁾₃</code> = the number of floors in the 2nd house.`
+  },
+  {
+    week: 2, section: "Multiple Linear Regression",
+    q: "What is Vectorization and why is it important for ML?",
+    a: `<strong>Vectorization</strong> uses vector/matrix operations (e.g., NumPy) instead of explicit for-loops.<br><br>Without: <code>for j in range(n): f += w[j]*x[j]</code><br>With: <code>f = np.dot(w, x) + b</code><br><br>Why it matters: modern CPUs and GPUs can perform <strong>parallel operations</strong> on entire vectors simultaneously, making vectorized code 10–1000× faster. Essential for large datasets.`
+  },
+  {
+    week: 2, section: "Multiple Linear Regression",
+    q: "How does Gradient Descent work for Multiple Linear Regression?",
+    a: `Update each weight wⱼ simultaneously:<br><code>wⱼ := wⱼ − α (∂J/∂wⱼ)</code><br><code>b := b − α (∂J/∂b)</code><br><br>Where: <code>∂J/∂wⱼ = (1/m) Σᵢ (f(x⁽ⁱ⁾) − y⁽ⁱ⁾) · x⁽ⁱ⁾ⱼ</code><br><br>Same algorithm as single-feature regression — just repeated for each of the n features. All updates are simultaneous.`
+  },
+  // ─── WEEK 2: Gradient Descent in Practice ────────────────────────────
+  {
+    week: 2, section: "Gradient Descent in Practice",
+    q: "What is Feature Scaling and why does it speed up Gradient Descent?",
+    a: `<strong>Feature Scaling</strong> rescales features to have similar ranges (e.g., all between −1 and 1).<br><br>Without scaling: elongated contours → gradient descent zig-zags and takes many steps.<br>With scaling: circular contours → gradient descent takes a direct path.<br><br>Common methods:<ul><li><strong>Min-max:</strong> <code>x' = (x − min)/(max − min)</code></li><li><strong>Mean normalization:</strong> <code>x' = (x − μ)/(max − min)</code></li><li><strong>Z-score:</strong> <code>x' = (x − μ)/σ</code></li></ul>`
+  },
+  {
+    week: 2, section: "Gradient Descent in Practice",
+    q: "How do you check whether Gradient Descent is converging?",
+    a: `Plot the <strong>learning curve</strong>: cost J(w,b) on the y-axis vs. number of iterations on the x-axis.<br><br>Signs of correct convergence: J decreases on <strong>every</strong> single iteration.<br><br>Signs of problems:<ul><li><strong>J increases or oscillates:</strong> α is likely too large → decrease it</li><li><strong>J barely decreases:</strong> α may be too small → increase it</li></ul>Also: set an <strong>automatic convergence test</strong> — stop if J decreases by less than ε = 10⁻³ in one iteration.`
+  },
+  {
+    week: 2, section: "Gradient Descent in Practice",
+    q: "What is Feature Engineering? Give an example.",
+    a: `<strong>Feature Engineering</strong> uses domain knowledge to create new features by combining or transforming existing ones, to improve model performance.<br><br>Example: For house price prediction, instead of using frontage (x₁) and depth (x₂) separately, create a new feature: <code>x₃ = x₁ × x₂ = area</code>. Area might be a much stronger predictor of price than either dimension alone.`
+  },
+  {
+    week: 2, section: "Gradient Descent in Practice",
+    q: "What is Polynomial Regression and when is it used?",
+    a: `<strong>Polynomial Regression</strong> fits a <strong>curve</strong> (not just a line) by adding polynomial features like x², x³.<br><br>Example: <code>f(x) = w₁x + w₂x² + w₃x³ + b</code><br><br>Still linear regression under the hood — just with engineered features (x₂ = x², x₃ = x³).<br><br><strong>Important:</strong> feature scaling becomes <em>especially</em> critical here because x², x³ create very large value ranges.`
+  },
+  // ─── WEEK 3: Classification with Logistic Regression ─────────────────
+  {
+    week: 3, section: "Classification with Logistic Regression",
+    q: "Why is Linear Regression unsuitable for Binary Classification?",
+    a: `Problems with using linear regression for classification:<ul><li>Predicts values <strong>outside [0,1]</strong> — cannot be interpreted as probabilities</li><li>Adding a single outlier can <strong>shift the decision boundary</strong> significantly, misclassifying previously correct examples</li><li>The model is highly sensitive to the range of x values in ways that harm classification</li></ul>Solution: use <strong>Logistic Regression</strong>, which always outputs values between 0 and 1.`
+  },
+  {
+    week: 3, section: "Classification with Logistic Regression",
+    q: "What is the Sigmoid function? Write its formula and describe its shape.",
+    a: `<code>g(z) = 1 / (1 + e⁻ᶻ)</code><br><br>Key properties:<ul><li>Output is always between <strong>0 and 1</strong></li><li>When z → +∞: g(z) → 1</li><li>When z → −∞: g(z) → 0</li><li>When z = 0: g(0) = 0.5 (the inflection point)</li></ul>Logistic Regression: <code>f(x) = g(w⃗·x⃗ + b)</code>. The output is interpreted as the <strong>probability that y = 1</strong>.`
+  },
+  {
+    week: 3, section: "Classification with Logistic Regression",
+    q: "What is a Decision Boundary? When does logistic regression predict y = 1?",
+    a: `The <strong>Decision Boundary</strong> is the line (or curve) that separates the region where the model predicts y=1 from where it predicts y=0.<br><br>Logistic regression predicts <strong>y = 1</strong> when: <code>f(x) ≥ 0.5</code>, which happens when <code>w⃗·x⃗ + b ≥ 0</code>.<br><br>With polynomial features, the decision boundary can be <strong>non-linear</strong> (e.g., a circle or ellipse).`
+  },
+  // ─── WEEK 3: Cost Function for Logistic Regression ───────────────────
+  {
+    week: 3, section: "Cost Function for Logistic Regression",
+    q: "Why can't we use MSE (Squared Error) as the cost function for Logistic Regression?",
+    a: `With the sigmoid function plugged in, MSE creates a <strong>non-convex cost surface</strong> with many local minima. Gradient descent is not guaranteed to find the global minimum.<br><br>We need a <strong>convex</strong> cost function (bowl-shaped, single global minimum) so that gradient descent reliably converges to the best solution.`
+  },
+  {
+    week: 3, section: "Cost Function for Logistic Regression",
+    q: "Write the Log Loss (Binary Cross-Entropy) for Logistic Regression. Why does it work?",
+    a: `Loss for one example:<br><code>L(f,y) = −y·log(f) − (1−y)·log(1−f)</code><br><br>Intuition:<ul><li>If <strong>y=1</strong>: loss = <code>−log(f)</code> — large penalty when f is close to 0 (wrong prediction)</li><li>If <strong>y=0</strong>: loss = <code>−log(1−f)</code> — large penalty when f is close to 1 (wrong prediction)</li></ul>Total cost: <code>J = −(1/m) Σ [y·log(f) + (1−y)·log(1−f)]</code><br>This is derived from Maximum Likelihood Estimation and is convex.`
+  },
+  // ─── WEEK 3: Gradient Descent for Logistic Regression ────────────────
+  {
+    week: 3, section: "Gradient Descent for Logistic Regression",
+    q: "Write the Gradient Descent update rules for Logistic Regression. How do they compare to linear regression?",
+    a: `Gradient descent update (identical-looking to linear regression):<br><code>wⱼ := wⱼ − α (∂J/∂wⱼ)</code><br>where <code>∂J/∂wⱼ = (1/m) Σᵢ (f(x⁽ⁱ⁾) − y⁽ⁱ⁾) · x⁽ⁱ⁾ⱼ</code><br><br>The formula <em>looks</em> the same as linear regression, but <strong>f(x) is now the sigmoid function</strong> <code>g(w⃗·x⃗+b)</code>, not just <code>w⃗·x⃗+b</code>. The derivative happens to simplify into the same form.`
+  },
+  // ─── WEEK 3: Overfitting & Regularization ────────────────────────────
+  {
+    week: 3, section: "The Problem of Overfitting",
+    q: "What is Overfitting (High Variance) and Underfitting (High Bias)? How do you recognise each?",
+    a: `<strong>Underfitting (High Bias):</strong> model too simple, doesn't capture the data's pattern.<br>Signs: high error on both training <em>and</em> test data. The model makes strong, wrong assumptions.<br><br><strong>Overfitting (High Variance):</strong> model too complex, fits noise in the training data.<br>Signs: very low training error, but high test/validation error. Fails to generalise to new examples.`
+  },
+  {
+    week: 3, section: "Addressing Overfitting",
+    q: "What are 3 strategies to address Overfitting?",
+    a: `<ul><li><strong>1. Collect more training data</strong> — the most reliable fix. More data forces the model to generalise better.</li><li><strong>2. Feature selection</strong> — remove irrelevant or redundant features that confuse the model.</li><li><strong>3. Regularization</strong> — keep all features but penalise large parameter values, shrinking model complexity without discarding features.</li></ul>`
+  },
+  {
+    week: 3, section: "Regularization",
+    q: "What is Regularization? Write the regularized cost function and explain the λ parameter.",
+    a: `<strong>Regularization</strong> adds a penalty for large weights to the cost function:<br><br><code>J(w,b) = (1/2m) Σ(f−y)² + (λ/2m) Σⱼ wⱼ²</code><br><br><strong>λ (lambda)</strong> is the regularization parameter:<ul><li><strong>λ = 0:</strong> no regularization → risk of overfitting</li><li><strong>λ too large:</strong> all wⱼ ≈ 0 → underfitting (model becomes f(x) ≈ b)</li><li><strong>λ just right:</strong> balances fit and simplicity</li></ul>Note: b is conventionally NOT regularized.`
+  },
+  {
+    week: 3, section: "Regularization",
+    q: "How does Regularization change the Gradient Descent update for Linear Regression?",
+    a: `Updated rule for wⱼ with regularization:<br><code>wⱼ := wⱼ(1 − α·λ/m) − α·(1/m)·Σᵢ(f(x⁽ⁱ⁾)−y⁽ⁱ⁾)·x⁽ⁱ⁾ⱼ</code><br><br>The term <code>(1 − αλ/m)</code> is slightly less than 1, so it <strong>shrinks wⱼ</strong> on every iteration — this is the regularization effect. The second term is the normal gradient update. <strong>b is not regularized</strong>, so its update is unchanged.`
+  }
+];
+
+// ─── App State ─────────────────────────────────────────────────────────────
+let deck = [...CARDS];
+let idx = 0;
+let flipped = false;
+let verdicts = {}; // cardId → 'known' | 'review'
+let currentWeek = 'all';
+
+function getCardId(card) {
+  return CARDS.indexOf(card);
+}
+
+function filteredDeck() {
+  if (currentWeek === 'all') return deck;
+  return deck.filter(c => c.week === parseInt(currentWeek));
+}
+
+let activeDeck = [...CARDS];
+
+// ─── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  if (activeDeck.length === 0) { showResults(); return; }
+  const card = activeDeck[idx];
+  const cardId = CARDS.indexOf(card);
+
+  document.getElementById('cardNum').textContent = `Card ${idx + 1} of ${activeDeck.length}`;
+
+  const weekColors = { 1: 'w1', 2: 'w2', 3: 'w3' };
+  document.getElementById('cardTopic').innerHTML =
+    `<span class="week-tag ${weekColors[card.week]}">Week ${card.week}</span>${card.section}`;
+
+  document.getElementById('cardQ').textContent = card.q;
+  document.getElementById('cardA').innerHTML = card.a;
+
+  // Reset flip
+  flipped = false;
+  document.getElementById('cardInner').classList.remove('flipped');
+
+  // Hide verdict buttons until flipped
+  document.getElementById('knowBtn').classList.remove('visible');
+  document.getElementById('reviewBtn').classList.remove('visible');
+
+  // Update verdict button styles based on stored verdict
+  const v = verdicts[cardId];
+  const kb = document.getElementById('knowBtn');
+  const rb = document.getElementById('reviewBtn');
+  kb.style.opacity = v === 'known' ? '1' : '0.7';
+  rb.style.opacity = v === 'review' ? '1' : '0.7';
+
+  // Nav buttons
+  document.getElementById('prevBtn').disabled = idx === 0;
+  document.getElementById('nextBtn').disabled = idx === activeDeck.length - 1;
+
+  updateProgress();
+  updateTOC();
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('cardInner').classList.toggle('flipped', flipped);
+  if (flipped) {
+    document.getElementById('knowBtn').classList.add('visible');
+    document.getElementById('reviewBtn').classList.add('visible');
+  } else {
+    document.getElementById('knowBtn').classList.remove('visible');
+    document.getElementById('reviewBtn').classList.remove('visible');
+  }
+}
+
+function nextCard() {
+  if (idx < activeDeck.length - 1) { idx++; render(); }
+  else { showResults(); }
+}
+
+function prevCard() {
+  if (idx > 0) { idx--; render(); }
+}
+
+function setVerdict(v) {
+  if (!flipped) return;
+  const card = activeDeck[idx];
+  const cardId = CARDS.indexOf(card);
+  verdicts[cardId] = v;
+  updateProgress();
+  updateTOC();
+  setTimeout(nextCard, 250);
+}
+
+function updateProgress() {
+  const total = activeDeck.length;
+  const reviewed = activeDeck.filter(c => verdicts[CARDS.indexOf(c)] !== undefined).length;
+  const known = activeDeck.filter(c => verdicts[CARDS.indexOf(c)] === 'known').length;
+  const review = activeDeck.filter(c => verdicts[CARDS.indexOf(c)] === 'review').length;
+  document.getElementById('progText').textContent = `${reviewed} / ${total} reviewed`;
+  document.getElementById('knownText').textContent = `${known} known · ${review} to review`;
+  document.getElementById('progressFill').style.width = `${total ? (reviewed / total) * 100 : 0}%`;
+}
+
+function showResults() {
+  const total = activeDeck.length;
+  const known = activeDeck.filter(c => verdicts[CARDS.indexOf(c)] === 'known').length;
+  document.getElementById('mainDeck').style.display = 'none';
+  document.getElementById('resultsPanel').classList.add('visible');
+  document.getElementById('resultsScore').textContent = `${known} / ${total}`;
+  const pct = total ? Math.round((known / total) * 100) : 0;
+  let msg = '';
+  if (pct >= 90) msg = "Excellent! You've mastered this material. 🎯";
+  else if (pct >= 70) msg = "Great work! A few more reviews and you'll nail it. 💪";
+  else if (pct >= 50) msg = "Good progress! Keep reviewing the tricky ones. 📚";
+  else msg = "Keep going — repetition is the key to learning ML. 🔁";
+  document.getElementById('resultsMsg').textContent = msg;
+}
+
+function restart() {
+  idx = 0;
+  verdicts = {};
+  document.getElementById('mainDeck').style.display = 'block';
+  document.getElementById('resultsPanel').classList.remove('visible');
+  render();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── TOC ───────────────────────────────────────────────────────────────────
+function buildTOC() {
+  const panel = document.getElementById('tocPanel');
+  const weeks = [1, 2, 3];
+  const weekNames = { 1: "Week 1 · Introduction to Machine Learning", 2: "Week 2 · Regression with Multiple Input Variables", 3: "Week 3 · Classification" };
+  let html = '';
+  weeks.forEach(w => {
+    const cards = activeDeck.filter(c => c.week === w);
+    if (!cards.length) return;
+    html += `<div class="toc-week w${w}">${weekNames[w]}</div>`;
+    cards.forEach((c, i) => {
+      const globalIdx = activeDeck.indexOf(c);
+      const cardId = CARDS.indexOf(c);
+      const v = verdicts[cardId] || '';
+      const isCurrent = globalIdx === idx;
+      html += `<div class="toc-item ${v} ${isCurrent ? 'current' : ''}" data-idx="${globalIdx}">
+        <span class="toc-num">${globalIdx + 1}</span>
+        <span class="toc-dot"></span>
+        <span>${c.q.length > 70 ? c.q.slice(0, 70) + '…' : c.q}</span>
+      </div>`;
+    });
+  });
+  panel.innerHTML = html;
+  panel.querySelectorAll('.toc-item').forEach(el => {
+    el.addEventListener('click', () => {
+      idx = parseInt(el.dataset.idx);
+      render();
+      panel.classList.remove('visible');
+    });
+  });
+}
+
+function updateTOC() {
+  if (document.getElementById('tocPanel').classList.contains('visible')) buildTOC();
+}
+
+// ─── Event Listeners ────────────────────────────────────────────────────────
+document.getElementById('cardScene').addEventListener('click', flipCard);
+
+document.getElementById('nextBtn').addEventListener('click', nextCard);
+document.getElementById('prevBtn').addEventListener('click', prevCard);
+
+document.getElementById('knowBtn').addEventListener('click', () => setVerdict('known'));
+document.getElementById('reviewBtn').addEventListener('click', () => setVerdict('review'));
+
+document.getElementById('restartBtn').addEventListener('click', restart);
+
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+  activeDeck = shuffle(activeDeck);
+  idx = 0;
+  verdicts = {};
+  document.getElementById('mainDeck').style.display = 'block';
+  document.getElementById('resultsPanel').classList.remove('visible');
+  render();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  verdicts = {};
+  idx = 0;
+  render();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentWeek = btn.dataset.week;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeDeck = currentWeek === 'all' ? [...CARDS] : CARDS.filter(c => c.week === parseInt(currentWeek));
+    idx = 0;
+    verdicts = {};
+    document.getElementById('mainDeck').style.display = 'block';
+    document.getElementById('resultsPanel').classList.remove('visible');
+    render();
+  });
+});
+
+document.getElementById('tocToggle').addEventListener('click', () => {
+  const panel = document.getElementById('tocPanel');
+  panel.classList.toggle('visible');
+  if (panel.classList.contains('visible')) buildTOC();
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'BUTTON') return;
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+  else if (e.key === 'ArrowRight') nextCard();
+  else if (e.key === 'ArrowLeft') prevCard();
+  else if (e.key === 'k' || e.key === 'K') setVerdict('known');
+  else if (e.key === 'r' || e.key === 'R') setVerdict('review');
+});
+
+// Init
+activeDeck = [...CARDS];
+render();
+</script>
+</body>
+</html>
